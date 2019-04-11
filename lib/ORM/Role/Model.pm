@@ -5,6 +5,8 @@ use Moose::Role;
 use ORM::Class::DB;
 use ORM::Class::Field;
 use Data::Printer;
+use DBIx::Simple;
+use DBI;
 
 requires 'Model','Db';
 
@@ -84,27 +86,68 @@ sub Create {
   	
 }
 
-sub Ping {...}
+
+
+=pod
+sub BUILD {
+     my $self = shift;
+     my $pk  = $self->_pk;
+    if ( $self->Get($pk) ) {
+        warn "Record already exists!";
+        return $self->Get($pk);
+    } else {
+	    return 	$self;
+	}
+}	
+=cut
+
+#sub Ping {...}
 
 sub Validate_attributes {...}
 
 sub Validate_schema {...}
+=pod
+sub Fetch {
+    my $class = shift;
+    my $fields = shift;
+    my $where = shift;
+    my $table = ref $class;
+    my $db = $class->Db;
+    my $result =  $db->_select($table, $fields, $where);
+    return $class->new($result);
+    
+}
+=cut
 
-sub Filter {...}
+sub Get {
+    my ($class, $pk_hash) = @_;
+    my $table =  $class;
+    my $result = $class->Db->_select($table, '*', $pk_hash) || undef;
+    #p $pk_hash;
+    #p $result;
+    if ($result) {
+        return $class->new($result);
+    } else {
+	    return;	
+	}
+}
 
 sub Clear_all {
 	my $class = shift;
-	my $table = ref $class;
-	my $sql = 'DELETE * FROM '. $table . ';';
-	my $dbh = $class->Db->dbh;
-	my $rv = $dbh->do($sql);
+	
+	#p $class;
+    my $dbh = $class->Db->dbh;
+	my $stmt = 'DELETE FROM '.$class;
+	#p $dbh;
+	#p $stmt;
+	$dbh->do($stmt);
 	
 }
 
 sub Drop { 
     my $class = shift;
-    my $table = ref $class;
-    my $sql = 'DROP TABLE '. $table .';';
+    my $table =  $class;
+    my $sql = 'DROP TABLE '. $table ;
     my $dbh = $class->Db->dbh;
     my $rv = $dbh->do($sql);	
 }
@@ -142,8 +185,24 @@ sub save {
     my $table = ref $self;
     
     my $db = $self->Db;
-    my $rv = $db->_insert($table, $fieldvals);
+    my $pk = $self->_pk;
+    #p $pk;
+    if ($db->_select($table,'*',$pk)) {
+		#print "R\n";
+	    die "To save a object already exists, please call Get(\$pk) on class, and then call replace(\$fieldvals_hash).";
+	}
+
+    my $result = $db->_insert($table, $fieldvals);
   
+}
+
+sub replace {
+    my $self = shift;
+    my $fields = shift;
+    my $where = $self->_pk;
+    my $db = $self->Db;
+    my $table = ref $self;
+    my $result = $db->_update($table, $fields, $where);	
 }
 
 sub clear {
@@ -156,7 +215,7 @@ sub clear {
 	    $pk_hash->{$key} = $self->$key;    
 	}
 	if ($pk_hash) {
-	    $db->_del($table, $pk_hash);	
+	    my $result = $db->_del($table, $pk_hash);	
 	} else {
 	    print "Nothing to delete.\n";	
 	}
