@@ -20,7 +20,7 @@ has 'is_unq' => (
     default => undef,
     );
     
-has 'length' => (
+has 'len' => (
     is => 'ro',
     isa => 'Num',
     );
@@ -28,8 +28,19 @@ has 'length' => (
 sub validate {
 	my $self = shift;
 	my $value = shift;
-	sub validate_INTEGER { ... }
-	sub validate_VARCHAR {...}
+        my $type = $self->type;
+        my $length = $self->len;
+	sub validate_INTEGER { 
+           my $val = shift;
+           
+        }
+	sub validate_VARCHAR {
+            my $val = shift;
+            my $char_len = length $val;
+            if ($char_len <= $length) {
+                return 1;
+            } else { return ;}
+        }
 	sub validate_DATE {...}
 	sub validate_BOOL {...}
 	sub validate_TIMESTAMP {...}

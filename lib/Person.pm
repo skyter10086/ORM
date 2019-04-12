@@ -21,10 +21,10 @@ sub Model {
   my $model = {
       'name' => ORM::Class::Field->new(
                    type => 'VARCHAR',
-                   length => 20,),
+                   len => 20,),
        'id' => ORM::Class::Field->new(
                    type => 'VARCHAR',
-                   length => 18,),
+                   len => 18,),
        'pk' => [qw/ id /],
    };
 }

@@ -7,6 +7,7 @@ use ORM::Class::Field;
 use Data::Printer;
 use DBIx::Simple;
 use DBI;
+use Carp;
 
 requires 'Model','Db';
 
@@ -41,7 +42,7 @@ sub Schema {
 	my $model = $class->Model;
 	my $table = ref $class;
 	#p $table;
-	my $schema = "CREATE TABLE $table \( ";
+	my $schema = "Construct TABLE $table \( ";
 	my $pk = $model->{pk};
 	my $pk_str = join ', ', @$pk;
 	delete $model->{pk};
@@ -76,13 +77,13 @@ sub Schema {
 	
 }
 
-sub Create {
+sub Construct {
   my $class = shift;
   my $table = ref $class;
   my $dbh = $class->Db()->dbh; # return the DBI dbh
   my $schema = $class->Schema();
   #p $schema;
-  $dbh->do($schema) or die "Create table $table Failed!";
+  $dbh->do($schema) or die "Construct table $table Failed!";
   	
 }
 
@@ -101,9 +102,31 @@ sub BUILD {
 }	
 =cut
 
-#sub Ping {...}
+sub Ping {
+    my $class = shift;
+    my $dbh = $class->Db->dbh;
+    my @tab_names = my @table_names = $dbh->tables('','main',$class,"TABLE") || return undef;
+    if ( grep { qr/."$class"/  } @table_names) {
+                $class->Validate_schema;
+		
+	} else {
+		return ;
+	}
+    
+}
 
-sub Validate_attributes {...}
+sub validate_attributes {
+    my $self = shift;
+    my $hash = $self->_hash;
+    for my ($k, $v) (each %{$hash}) {
+        next if $k eq 'pk';
+        my $field = $self->Model->{$k};
+        my $bool = $field->validate($self->$k) || {print "$k attributes validate failed!\n"; return;};
+    }
+    print "All attributes validate successed!\n";
+    return 1;
+
+}
 
 sub Validate_schema {...}
 =pod
