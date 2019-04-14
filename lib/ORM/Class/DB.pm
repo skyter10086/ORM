@@ -31,7 +31,8 @@ has 'options' => (
   isa => 'HashRef',
   required => 1,
   );
-  
+
+=pod  
 sub connect {
 	my $self = shift;
 	my $dbs = DBIx::Simple->connect(
@@ -41,6 +42,7 @@ sub connect {
 	            $self->options,)
 	  or die DBIx::Simple->error;
 }
+=cut
 
 sub dbh {
 	my $self = shift;
@@ -49,7 +51,8 @@ sub dbh {
 	              $self->user,
 	              $self->passwd,
 	              $self->options,)
-	   or die DBI->err;
+	   or croak DBI->err;
+	return $dbh;
 }
 
 sub dbix {
@@ -60,7 +63,7 @@ sub dbix {
 	                 $self->passwd,
 	                 $self->options,)
 	
-	 or die DBIx::Simple->error;
+	 or croak DBIx::Simple->error;
 	   $dbix->abstract = SQL::Abstract->new(logic => 'and');
 
 	   return $dbix;
@@ -69,13 +72,13 @@ sub dbix {
 sub _insert {
 	my ($class, $table, $data) = @_;
 	my $dbix = $class->dbix;
-	my $result = $dbix->insert($table, $data);
+	return my $result = $dbix->insert($table, $data);
 }
 
 sub _update {
 	my ($class, $table,  $fieldvals, $where) = @_;
 	my $dbix = $class->dbix;
-	my $result = $dbix->update($table, $fieldvals, $where);
+	return my $result = $dbix->update($table, $fieldvals, $where);
 }
 
 sub _select {
@@ -92,7 +95,7 @@ sub _select {
 sub _del {
 	my ($class, $table, $where) = @_;
 	my $dbix = $class->dbix;
-	my $result = $dbix->delete($table, $where);
+	return my $result = $dbix->delete($table, $where);
 }
 	
 

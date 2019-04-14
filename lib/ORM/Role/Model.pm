@@ -75,7 +75,7 @@ sub Schema {
   else {
 	  $schema .= "\n)"  
   }
-	  
+  return $schema;  
 	
 }
 
@@ -86,7 +86,7 @@ sub Construct {
   my $schema = $class->Schema();
   #p $dbh;
   #p $schema;
-  $dbh->do($schema) or die "Construct table $table Failed!";
+  return my $rv = $dbh->do($schema) or croak "Construct table $table Failed!";
   	
 }
 
@@ -111,7 +111,7 @@ sub Ping {
     my $db_info = $dbh->table_info('','main','%',"TABLE") ||  
                       die "Can not get the info of DB!\n";
 my $table_infos =$db_info->fetchall_arrayref;
-#p $table_names;
+
 if ( grep { $_->[2] eq $class  } @$table_infos) {
     print "Find Table!\n";
     
@@ -141,7 +141,7 @@ sub Validate_schema {
     my $class = shift;
     #p $class;
     my $schema = $class->Schema ;
-    $schema =~ s/\s+//g;
+    $schema =~ s/\s+//gx;
     
     my $dbh = $class->Db->dbh;
     my $db_info = $dbh->table_info('','main','%',"TABLE") ||  
@@ -150,7 +150,7 @@ sub Validate_schema {
     my @info = grep { $_->[2] eq $class} @$table_infos;
     #p @info;
     my $table_schema = $info[0][5] ;
-    $table_schema =~ s/\s+//g;
+    $table_schema =~ s/\s+//gx;
     #p $table_schema;
     #p $schema;
     if ($table_schema eq $schema) {
@@ -188,7 +188,7 @@ sub Get {
 	}
 }
 
-sub Clear_all {
+sub ClearAll {
 	my $class = shift;
 	
 	#p $class;
@@ -196,7 +196,7 @@ sub Clear_all {
 	my $stmt = 'DELETE FROM '.$class;
 	#p $dbh;
 	#p $stmt;
-	$dbh->do($stmt);
+	return my $rv = $dbh->do($stmt);
 	
 }
 
@@ -205,7 +205,7 @@ sub Drop {
     my $table =  $class;
     my $sql = 'DROP TABLE '. $table ;
     my $dbh = $class->Db->dbh;
-    my $rv = $dbh->do($sql);	
+    return my $rv = $dbh->do($sql);	
 }
 
 sub Import_csv {...}
@@ -245,10 +245,10 @@ sub save {
     #p $pk;
     if ($db->_select($table,'*',$pk)) {
 		#print "R\n";
-	    die "To save a object already exists, please call Get(\$pk) on class, and then call replace(\$fieldvals_hash).";
+	    croak "To save a object already exists, please call Get(\$pk) on class, and then call replace(\$fieldvals_hash).";
 	}
 
-    my $result = $db->_insert($table, $fieldvals);
+    return my $result = $db->_insert($table, $fieldvals);
   
 }
 
@@ -258,7 +258,8 @@ sub replace {
     my $where = $self->_pk;
     my $db = $self->Db;
     my $table = ref $self;
-    my $result = $db->_update($table, $fields, $where);	
+    return my $result = $db->_update($table, $fields, $where);
+	
 }
 
 sub clear {
@@ -271,9 +272,10 @@ sub clear {
 	    $pk_hash->{$key} = $self->$key;    
 	}
 	if ($pk_hash) {
-	    my $result = $db->_del($table, $pk_hash);	
+	    return my $result = $db->_del($table, $pk_hash);	
 	} else {
-	    print "Nothing to delete.\n";	
+	    print "Nothing to delete.\n";
+        return;		
 	}
 }
 

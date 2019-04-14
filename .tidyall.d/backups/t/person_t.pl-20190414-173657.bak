@@ -3,32 +3,34 @@ use DBI;
 use Data::Printer;
 
 my $lucky = Person->new(
-    name => 'ZengLi',
-    id   => '411302198310203835',
+  name => 'ZengLi',
+  id => '411302198310203835',
 );
 
-print "{\n\t id => ", $lucky->id,   "\n";
-print "\t name => ",  $lucky->name, "\n\}";
+print "{\n\t id => ",$lucky->id,"\n";
+print "\t name => ", $lucky->name, "\n\}";
 print "\nNow checking the attributes...\n";
 $lucky->validate_attributes;
 
-if ( Person->Ping ) {
+if (Person->Ping) {
 
     print "Table already existed!\n";
-    if ( Person->Validate_schema ) {
+    if (Person->Validate_schema) {
         print "Table has good schema.\n";
-    }
-    else {
+    } else {
         Person->Drop;
         Person->Construct;
     }
-}
-else {
+} else {
     Person->Construct;
     print "Table built down!\n";
 }
 $lucky->save;
 print "program have done!\n";
+
+
+
+
 
 __END__
 my $dbh = DBI->connect(

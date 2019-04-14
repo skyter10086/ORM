@@ -1,7 +1,6 @@
 package Person;
 
 use utf8::all;
-use Carp;
 
 #use ORM::Role::Model;
 use ORM::Class::Field;
@@ -28,7 +27,6 @@ sub Model {
         ),
         'pk' => [qw/ id /],
     };
-    return $model;
 }
 
 sub Db {
@@ -37,8 +35,7 @@ sub Db {
         user    => '',
         passwd  => '',
         options => { sqlite_unicode => 1, AutoCommit => 1, RaiseError => 1 },
-    );
-    return $db;
+    ) or die "Can't set your DB class!";
 }
 
 1;
