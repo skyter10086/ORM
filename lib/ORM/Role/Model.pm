@@ -40,23 +40,25 @@ sub Db {
 sub Schema {
 	my $class = shift;
 	my $model = $class->Model;
-	my $table = ref $class;
+	my $table =  $class;
 	#p $table;
-	my $schema = "Construct TABLE $table \( ";
+	my $schema = "CREATE TABLE $table \( ";
 	my $pk = $model->{pk};
 	my $pk_str = join ', ', @$pk;
 	delete $model->{pk};
 	#p $model;
 	my @sentences = ();
 	
-	while (my ($k,$v) = each %{$model}) {
+	#while (my ($k,$v) = each %{$model}) {
 		#print "dump \$k : ";
 		#p $k;
 		#print "dump \$v : ";
 		#p $v;
+      for my $k (sort keys %{$model}) {
+      my $v = $model->{$k};
       my $sentence = '';
 	  my $type = $v->type;
-	  my $len = $v->length;
+	  my $len = $v->len;
 	  $sentence .= "$k $type\($len\) ";
 	  $sentence .= " NOT NULL " if $v->is_null;
 	  $sentence .= " UNIQUE " if $v->is_unq;
@@ -82,6 +84,7 @@ sub Construct {
   my $table = ref $class;
   my $dbh = $class->Db()->dbh; # return the DBI dbh
   my $schema = $class->Schema();
+  #p $dbh;
   #p $schema;
   $dbh->do($schema) or die "Construct table $table Failed!";
   	
@@ -105,30 +108,60 @@ sub BUILD {
 sub Ping {
     my $class = shift;
     my $dbh = $class->Db->dbh;
-    my @tab_names = my @table_names = $dbh->tables('','main',$class,"TABLE") || return undef;
-    if ( grep { qr/."$class"/  } @table_names) {
-                $class->Validate_schema;
-		
-	} else {
-		return ;
-	}
+    my $db_info = $dbh->table_info('','main','%',"TABLE") ||  
+                      die "Can not get the info of DB!\n";
+my $table_infos =$db_info->fetchall_arrayref;
+#p $table_names;
+if ( grep { $_->[2] eq $class  } @$table_infos) {
+    print "Find Table!\n";
     
+    return 1;
+		
+} else {
+    print "You should check the DB's table!\n";
+    return ;
+}
 }
 
 sub validate_attributes {
     my $self = shift;
     my $hash = $self->_hash;
-    for my ($k, $v) (each %{$hash}) {
+    #p $hash;
+    for (my ($k, $v) = each %{$hash}) {
         next if $k eq 'pk';
         my $field = $self->Model->{$k};
-        my $bool = $field->validate($self->$k) || {print "$k attributes validate failed!\n"; return;};
+        my $bool = $field->validate($self->$k) || return;
     }
     print "All attributes validate successed!\n";
     return 1;
 
 }
 
-sub Validate_schema {...}
+sub Validate_schema {
+    my $class = shift;
+    #p $class;
+    my $schema = $class->Schema ;
+    $schema =~ s/\s+//g;
+    
+    my $dbh = $class->Db->dbh;
+    my $db_info = $dbh->table_info('','main','%',"TABLE") ||  
+                      die "Can not get the info of DB!\n";
+    my $table_infos =$db_info->fetchall_arrayref;
+    my @info = grep { $_->[2] eq $class} @$table_infos;
+    #p @info;
+    my $table_schema = $info[0][5] ;
+    $table_schema =~ s/\s+//g;
+    #p $table_schema;
+    #p $schema;
+    if ($table_schema eq $schema) {
+        print "Table schema validate successed!\n";
+        return 1;
+    } else {
+        print "Table schema validate failed!\n";
+        return;
+    } 
+
+}
 =pod
 sub Fetch {
     my $class = shift;
