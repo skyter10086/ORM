@@ -86,7 +86,8 @@ sub Construct {
   my $schema = $class->Schema();
   #p $dbh;
   #p $schema;
-  return my $rv = $dbh->do($schema) or croak "Construct table $table Failed!";
+  my $rv = $dbh->do($schema) or croak "Construct table $table Failed!";
+  return $rv;
   	
 }
 

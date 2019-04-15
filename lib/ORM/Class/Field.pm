@@ -51,7 +51,7 @@ sub validate {
 	sub validate_DATE {...}
 	sub validate_BOOL {
         my $bool = shift;
-        if ($bool eq 'True') {
+        if ($bool) {
             return 1;
         } else {
             return;
@@ -65,7 +65,7 @@ sub validate {
                         my $val = shift;
                         my $leng = shift;
                         my $eq_val = $val + 0;
-                        if ($val == int($eq_val)) {
+                        if ($val == int($eq_val) && $val <= 10 ** $leng) {
                             return 1;
                         } else {
                             return;
